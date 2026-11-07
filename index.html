@@ -4,66 +4,10 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="referrer" content="no-referrer">
-  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self'; style-src 'self'; img-src 'self' data:; media-src 'self'; connect-src 'none'; font-src 'self'; object-src 'none'; base-uri 'none'; form-action 'none'">
-  <meta name="description" content="自動の遅延表示と、直前の動きをスローで見返す体育用アプリ。登録不要・広告なし・映像は端末内だけ。">
-  <link rel="icon" href="./icon.svg" type="image/svg+xml">
-  <link rel="stylesheet" href="./style.css">
-  <script type="module" src="./app.js"></script>
-  <title>10秒リプレイ｜体育の動きを見返す</title>
+  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; base-uri 'none'; form-action 'none'">
+  <meta http-equiv="refresh" content="0; url=https://yaokode.github.io/10sec-replay/">
+  <link rel="canonical" href="https://yaokode.github.io/10sec-replay/">
+  <title>10秒リプレイ</title>
 </head>
-<body>
-  <header><h1>10秒リプレイ</h1><a href="#guide">使い方</a></header>
-  <main id="app">
-    <fieldset class="mode-choice"><legend>見る方法</legend><div class="segmented">
-      <button type="button" data-mode="delay" aria-pressed="true"><span class="mode-name" id="delay-name">10秒おくれて再生</span><span class="mode-help">動いたあと、自動で映る</span></button>
-      <button type="button" data-mode="slow" aria-pressed="false"><span class="mode-name" id="slow-name">直前10秒をスロー再生</span><span class="mode-help">動いたあと、ボタンで見返す</span></button>
-    </div></fieldset>
-    <div class="settings" aria-label="映像の設定">
-      <label for="seconds">時間 <select id="seconds"><option value="5">5秒</option><option value="10" selected>10秒</option><option value="15">15秒</option></select></label>
-      <label for="quality">画質 <select id="quality"><option value="standard">標準</option><option value="light">低め</option></select></label>
-      <label class="check-label"><input id="mirror" type="checkbox">左右反転</label>
-      <button id="switch" type="button" disabled>カメラ切替</button>
-    </div>
-    <p id="mode-hint" class="mode-hint">10秒あとに、自動で映るよ。</p>
-    <section id="viewer" class="viewer" aria-label="動きを見る画面">
-      <div class="viewport" id="viewport">
-        <canvas id="display" width="480" height="270" aria-label="動きの映像"></canvas>
-        <div class="empty" id="empty"><p id="empty-text">「はじめる」を押そう</p></div>
-        <p class="view-state" id="view-state" hidden></p>
-      </div>
-      <div id="review-controls" hidden>
-        <label class="seek-label" for="seek">見たいところへ <span id="clip-time"></span></label>
-        <input type="range" id="seek" min="0" max="1000" value="0" aria-label="映像の再生位置（秒）">
-      </div>
-      <div class="controls" aria-label="カメラと再生の操作">
-        <button id="start" class="primary" type="button">はじめる</button>
-        <button id="watch" class="primary" type="button" hidden>直前10秒を見る</button>
-        <button id="again" type="button" hidden>もう一度</button>
-        <button id="pause" type="button" hidden>とめる</button>
-        <label id="speed-setting" hidden>速さ <select id="speed"><option value="1">1倍</option><option value="0.5" selected>0.5倍</option><option value="0.25">0.25倍</option></select></label>
-        <button id="fullscreen" type="button" aria-pressed="false">映像を大きく</button>
-        <button id="end" class="danger" type="button" disabled>おわる</button>
-      </div>
-      <p id="screen-note" class="screen-note">カメラ停止中</p>
-      <p id="status" class="status" role="status" aria-live="polite">安全な場所に置いて、はじめよう。</p>
-    </section>
-    <p class="prompt">見るところを1つ決めて、もう一度ためそう。</p>
-    <details id="guide"><summary>使い方</summary>
-      <ol><li>端末を安全な場所に置き、全身が映るようにしよう。</li><li>「おくれて再生」は、選んだ秒数あとに動きが映るよ。</li><li>「スロー再生」は、動いたあとに秒数の書かれた「見る」ボタンを押すよ。「もう一度」で同じ動き、「つぎへ」で次の動き。</li><li>使い終わったら「おわる」。映像も消えるよ。</li></ol>
-      <p>走る場所や着地する場所に置かないでね。困ったら先生に聞こう。映りたくないときは、見る役や伝える役でも参加できるよ。</p>
-    </details>
-    <details id="about"><summary>このアプリについて</summary>
-      <p>無料・広告なし。登録不要。音声は録りません。映像は端末のメモリ内だけで扱い、保存・共有・外部送信する機能はありません。配信サービスには、アクセス時のIPアドレスなどのログが残ります。</p>
-      <p>映像の保持は最大15.8秒・画像計算値64MiB以内（処理中の画像・入力映像・Canvas等は別）。標準画質480×270で毎秒10コマ、15秒の設定では毎秒8コマ、低めの画質320×180では毎秒8コマを目標に取得します。撮れていない瞬間を補う機能はありません。</p>
-      <p>見返し中・一時停止中はカメラが止まり、映像は最長60秒で消えます。カメラ連続利用は15分で終了。「おわる」・タブ移動・ページ離脱でカメラ停止と映像解放。ブラウザー停止中の厳密な時間処理は保証しません。時間・画質の変更時は前の映像を消します。</p>
-      <p>「映像を大きく」は、対応ブラウザーでは全画面、それ以外ではページ内いっぱいに表示します。学校端末の動作・利用可否は未確認。URLへのアクセスとカメラ利用は、学校の経路で別々に確認してください。</p>
-      <p>10秒を基本に、5秒・15秒にも変えられます。試用版 v0.3.1</p>
-    </details>
-    <details id="diagnostics"><summary>動作の情報</summary><p id="metrics">カメラ停止中・一時映像なし</p>
-      <p>画像の経過時間は処理内の値です。実際の遅延は時計を映して確認してください。容量は画像の計算値で、端末全体のメモリとは異なります。</p>
-    </details>
-  </main>
-  <noscript><p>JavaScriptが必要です。先生に聞いてください。</p></noscript>
-  <video id="source" muted playsinline aria-hidden="true"></video>
-</body>
+<body><p><a href="https://yaokode.github.io/10sec-replay/">10秒リプレイを開く</a></p></body>
 </html>
