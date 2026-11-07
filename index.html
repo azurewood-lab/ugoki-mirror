@@ -9,14 +9,14 @@
   <link rel="icon" href="./icon.svg" type="image/svg+xml">
   <link rel="stylesheet" href="./style.css">
   <script type="module" src="./app.js"></script>
-  <title>体育リプレイ｜体育の動きを見返す</title>
+  <title>10秒リプレイ｜体育の動きを見返す</title>
 </head>
 <body>
-  <header><h1>体育リプレイ</h1><a href="#guide">使い方</a></header>
+  <header><h1>10秒リプレイ</h1><a href="#guide">使い方</a></header>
   <main id="app">
     <fieldset class="mode-choice"><legend>見る方法</legend><div class="segmented">
-      <button type="button" data-mode="delay" aria-pressed="true">おくれて再生<span>動いたあと、自動で映る</span></button>
-      <button type="button" data-mode="slow" aria-pressed="false">スロー再生<span>動いたあと、ボタンで見返す</span></button>
+      <button type="button" data-mode="delay" aria-pressed="true"><span class="mode-name" id="delay-name">10秒おくれて再生</span><span class="mode-help">動いたあと、自動で映る</span></button>
+      <button type="button" data-mode="slow" aria-pressed="false"><span class="mode-name" id="slow-name">直前10秒をスロー再生</span><span class="mode-help">動いたあと、ボタンで見返す</span></button>
     </div></fieldset>
     <div class="settings" aria-label="映像の設定">
       <label for="seconds">時間 <select id="seconds"><option value="5">5秒</option><option value="10" selected>10秒</option><option value="15">15秒</option></select></label>
@@ -33,7 +33,7 @@
       </div>
       <div id="review-controls" hidden>
         <label class="seek-label" for="seek">見たいところへ <span id="clip-time"></span></label>
-        <input type="range" id="seek" min="0" max="1000" value="0" aria-label="映像の再生位置">
+        <input type="range" id="seek" min="0" max="1000" value="0" aria-label="映像の再生位置（秒）">
       </div>
       <div class="controls" aria-label="カメラと再生の操作">
         <button id="start" class="primary" type="button">はじめる</button>
@@ -49,7 +49,7 @@
     </section>
     <p class="prompt">見るところを1つ決めて、もう一度ためそう。</p>
     <details id="guide"><summary>使い方</summary>
-      <ol><li>端末を安全な場所に置き、全身が映るようにしよう。</li><li>「おくれて再生」は、動いたあとに画面を見るよ。</li><li>「スロー再生」は、動いたあとに秒数の書かれた「見る」ボタンを押すよ。「もう一度」で同じ動き、「つぎへ」で次の動き。</li><li>使い終わったら「おわる」。映像も消えるよ。</li></ol>
+      <ol><li>端末を安全な場所に置き、全身が映るようにしよう。</li><li>「おくれて再生」は、選んだ秒数あとに動きが映るよ。</li><li>「スロー再生」は、動いたあとに秒数の書かれた「見る」ボタンを押すよ。「もう一度」で同じ動き、「つぎへ」で次の動き。</li><li>使い終わったら「おわる」。映像も消えるよ。</li></ol>
       <p>走る場所や着地する場所に置かないでね。困ったら先生に聞こう。映りたくないときは、見る役や伝える役でも参加できるよ。</p>
     </details>
     <details id="about"><summary>このアプリについて</summary>
@@ -57,7 +57,7 @@
       <p>映像の保持は最大15.8秒・画像計算値64MiB以内（処理中の画像・入力映像・Canvas等は別）。標準画質480×270で毎秒10コマ、15秒の設定では毎秒8コマ、低めの画質320×180では毎秒8コマを目標に取得します。撮れていない瞬間を補う機能はありません。</p>
       <p>見返し中・一時停止中はカメラが止まり、映像は最長60秒で消えます。カメラ連続利用は15分で終了。「おわる」・タブ移動・ページ離脱でカメラ停止と映像解放。ブラウザー停止中の厳密な時間処理は保証しません。時間・画質の変更時は前の映像を消します。</p>
       <p>「映像を大きく」は、対応ブラウザーでは全画面、それ以外ではページ内いっぱいに表示します。学校端末の動作・利用可否は未確認。URLへのアクセスとカメラ利用は、学校の経路で別々に確認してください。</p>
-      <p>試用版 v0.3.0</p>
+      <p>10秒を基本に、5秒・15秒にも変えられます。試用版 v0.3.1</p>
     </details>
     <details id="diagnostics"><summary>動作の情報</summary><p id="metrics">カメラ停止中・一時映像なし</p>
       <p>画像の経過時間は処理内の値です。実際の遅延は時計を映して確認してください。容量は画像の計算値で、端末全体のメモリとは異なります。</p>

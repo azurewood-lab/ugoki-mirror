@@ -1,21 +1,22 @@
 import { FrameBuffer, capturePlan } from './frame-buffer.mjs';
 
 const $ = id => document.getElementById(id);
-const ui = Object.fromEntries(['app','source','display','empty','empty-text','view-state','status','start','pause','watch','again','switch','fullscreen','end','review-controls','seek','clip-time','quality','metrics','seconds','viewer','speed','speed-setting','mirror','mode-hint','screen-note'].map(id => [id, $(id)]));
+const ui = Object.fromEntries(['app','source','display','empty','empty-text','view-state','status','start','pause','watch','again','switch','fullscreen','end','review-controls','seek','clip-time','quality','metrics','seconds','viewer','speed','speed-setting','mirror','mode-hint','screen-note','delay-name','slow-name','viewport'].map(id => [id, $(id)]));
 const profiles = { standard:{width:480,height:270,fps:10}, light:{width:320,height:180,fps:8} };
 const MAX_IMAGE_BYTES = 64 * 1024 * 1024;
 const REVIEW_MS = 60000, SESSION_MS = 15 * 60 * 1000;
 const ctx = ui.display.getContext('2d', {alpha:false});
 let mode = 'delay', phase = 'idle', generation = 0, session = null, review = null;
-let rate = 0.5, selectedDevice = '', devices = [], retainedTimer = 0, reviewRaf = 0;
+let rate = 0.5, selectedDevice = '', devices = [], retainedTimer = 0, reviewRaf = 0, layoutRaf = 0;
 
 function message(text, error = false) {
   ui.status.textContent = text;
   ui.status.classList.toggle('error', error);
+  scheduleLayout();
 }
 function overlay(text = '') {
   ui.empty.hidden = !text;
-  if (text) ui['empty-text'].textContent = text;
+  if (text && ui['empty-text'].textContent !== text) ui['empty-text'].textContent = text;
 }
 function badge(text = '') {
   ui['view-state'].textContent = text && ui.mirror.checked ? `${text}／左右反転` : text;
@@ -37,9 +38,12 @@ function modeDescription() {
   return mode === 'delay' ? `${seconds()}秒あとに、自動で映るよ。` : `動いたあとに「直前${seconds()}秒を見る」を押そう。`;
 }
 function renderControls() {
+  const active = document.activeElement;
   const live = phase === 'live', viewing = phase === 'review';
   ui.app.dataset.phase = phase; ui.app.dataset.mode = mode; ui.viewer.dataset.phase = phase;
   ui['mode-hint'].textContent = modeDescription();
+  ui['delay-name'].textContent = `${seconds()}秒おくれて再生`;
+  ui['slow-name'].textContent = `直前${seconds()}秒をスロー再生`;
   ui.start.hidden = live;
   ui.start.disabled = phase === 'starting';
   ui.start.textContent = viewing ? 'つぎへ' : phase === 'paused' ? '再開する' : phase === 'starting' ? 'カメラ確認中…' : 'はじめる';
@@ -53,18 +57,39 @@ function renderControls() {
   ui.end.disabled = phase === 'idle';
   ui['review-controls'].hidden = !viewing;
   ui.switch.disabled = !live || devices.length < 2;
-  ui.switch.title = devices.length < 2 ? 'カメラが2台以上あるときに使えます' : '次のカメラへ切り替えます。前の映像は消えます';
+  ui.switch.title = !live ? 'はじめると、使えるカメラを確認します' : devices.length < 2 ? 'カメラが2台以上あるときに使えます' : '次のカメラへ切り替えます。前の映像は消えます';
   for (const control of [ui.quality,ui.seconds,ui.mirror]) control.disabled = phase === 'starting';
   ui['speed-setting'].hidden = mode !== 'slow';
   document.querySelectorAll('button[data-mode]').forEach(button => button.setAttribute('aria-pressed',String(button.dataset.mode === mode)));
   ui.speed.value = String(rate);
   if (viewing) badge(`見返し ${rate}倍・カメラ停止`);
+  if (ui.viewer.contains(active) && (active.disabled || active.closest('[hidden]'))) {
+    const next = viewing ? ui.pause : phase==='idle' || phase==='paused' ? ui.start : ui.end;
+    next.focus({preventScroll:true});
+  }
+  scheduleLayout();
+}
+function scheduleLayout() {
+  if(layoutRaf)return;
+  layoutRaf=requestAnimationFrame(()=>{layoutRaf=0;fitViewport();});
+}
+function fitViewport() {
+  if(expanded()){ui.viewport.style.removeProperty('height');return;}
+  const viewer=ui.viewer.getBoundingClientRect(), viewport=ui.viewport.getBoundingClientRect();
+  const top=viewer.top+window.scrollY;
+  const chrome=viewer.height-viewport.height;
+  const essential=ui.viewer.querySelector('.controls').offsetHeight+(ui['review-controls'].hidden?0:ui['review-controls'].offsetHeight);
+  // Prefer room for all guidance; on short displays keep the action row reachable first.
+  const available=window.innerHeight-top-12;
+  const height=Math.max(64,Math.min(Math.max(96,available-chrome),available-essential));
+  const value=`${Math.floor(height)}px`;
+  if(ui.viewport.style.height!==value)ui.viewport.style.height=value;
 }
 function clearReview() {
   clearTimeout(retainedTimer); retainedTimer = 0;
   cancelAnimationFrame(reviewRaf); reviewRaf = 0;
   review?.sequence.clear(); review = null;
-  ui.seek.value = '0'; ui['clip-time'].textContent = '';
+  ui.seek.value = '0'; ui.seek.removeAttribute('aria-valuetext'); ui['clip-time'].textContent = '';
 }
 function disposeSession() {
   const old = session; session = null;
@@ -128,6 +153,7 @@ async function startCamera(deviceId = '') {
     }));
     ui.display.width = config.width; ui.display.height = config.height;
     s.sampleTime = s.lastVideo = s.lastImage = performance.now(); phase = 'live';
+    overlay(`準備中 あと約${seconds()}秒`);
     badge(mode === 'delay' ? `${seconds()}秒あと` : '今の映像・見返す準備中');
     message(mode === 'delay' ? `映像を準備中。${seconds()}秒待ってね。` : `準備中。${seconds()}秒待ってね。`);
     s.limitTimer = setTimeout(()=>{if(session===s) stop('15分たったので終了しました。端末の熱さを先生と確かめてから再開してください。');},SESSION_MS);
@@ -181,13 +207,15 @@ function renderLoop(s) {
     paint(frame.image);s.shownTime=frame.time;overlay();
   }
   const span=s.buffer.frames.length>1?s.buffer.frames.at(-1).time-s.buffer.frames[0].time:0;
+  const remaining=Math.max(1,Math.ceil(seconds()-span/1000));
+  if(mode==='delay' && !frame)overlay(`準備中 あと約${remaining}秒`);
   const ready=mode==='delay'?!!frame:span>=seconds()*1000-150;
   if(ready && !s.ready){
     s.ready=true;badge(mode==='delay'?`${seconds()}秒あと`:'今の映像・直前を見返せます');
     if(!s.performanceWarned)message(mode==='delay'?'動いたあとに、画面を見よう。':`準備できたよ。動いたあとに「直前${seconds()}秒を見る」を押そう。`);
     renderControls();
   }
-  ui['screen-note'].textContent=mode==='delay'?(frame?`${seconds()}秒あとに表示中`:'遅延表示の準備中'):(s.ready?'今の映像を表示中':`今の映像・準備中（あと約${Math.max(1,Math.ceil(seconds()-span/1000))}秒）`);
+  ui['screen-note'].textContent=mode==='delay'?(frame?`${seconds()}秒あとに表示中`:`準備中（あと約${remaining}秒）`):(s.ready?'今の映像を表示中':`今の映像・準備中（あと約${remaining}秒）`);
 }
 function updateMetrics(s) {
   const now=performance.now();
@@ -229,6 +257,7 @@ function drawReview() {
   if(!review)return;
   const frame=review.sequence.at(review.position);if(frame)paint(frame.image);
   ui.seek.value=String(review.position/review.sequence.duration*1000);
+  ui.seek.setAttribute('aria-valuetext',`${(review.position/1000).toFixed(1)}秒 / ${(review.sequence.duration/1000).toFixed(1)}秒`);
   ui['clip-time'].textContent=`${(review.position/1000).toFixed(1)} / ${(review.sequence.duration/1000).toFixed(1)}秒`;
 }
 function reviewLoop() {
@@ -260,7 +289,9 @@ ui.mirror.addEventListener('change',()=>{
   if(review)drawReview();
   else if(phase==='paused'){
     const copy=document.createElement('canvas');copy.width=ui.display.width;copy.height=ui.display.height;
-    copy.getContext('2d').drawImage(ui.display,0,0);
+    const copyContext=copy.getContext('2d');
+    if(!copyContext){fail({userMessage:'映像を反転できませんでした。もう一度はじめよう。'});return;}
+    copyContext.drawImage(ui.display,0,0);
     ctx.save();ctx.translate(ui.display.width,0);ctx.scale(-1,1);ctx.drawImage(copy,0,0);ctx.restore();
     copy.width=copy.height=1;badge('静止画・カメラ停止');
   }else if(phase==='live')badge(mode==='delay'?`${seconds()}秒あと`:'今の映像');
@@ -272,9 +303,14 @@ function syncExpanded(){
   document.body.classList.toggle('view-expanded',active);
   document.querySelector('header').inert=active;
   for(const element of ui.app.children)if(element!==ui.viewer)element.inert=active;
+  if(active && !ui.viewer.contains(document.activeElement))ui.fullscreen.focus({preventScroll:true});
+  scheduleLayout();
 }
 ui.fullscreen.addEventListener('click',async()=>{
-  if(document.fullscreenElement===ui.viewer){await document.exitFullscreen();}
+  if(document.fullscreenElement===ui.viewer){
+    try{await document.exitFullscreen();}
+    catch{message('画面を戻せませんでした。端末の全画面を閉じる操作を試してください。',true);return;}
+  }
   else if(ui.viewer.classList.contains('expanded'))ui.viewer.classList.remove('expanded');
   else{
     try{if(!ui.viewer.requestFullscreen)throw new Error('unavailable');await ui.viewer.requestFullscreen();}
@@ -284,9 +320,20 @@ ui.fullscreen.addEventListener('click',async()=>{
 });
 document.addEventListener('fullscreenchange',syncExpanded);
 document.addEventListener('keydown',event=>{
+  if(event.key==='Tab' && expanded()){
+    const controls=[...ui.viewer.querySelectorAll('button,select,input')].filter(element=>!element.disabled && !element.closest('[hidden]'));
+    const first=controls[0],last=controls.at(-1);
+    if(event.shiftKey && document.activeElement===first){event.preventDefault();last.focus();}
+    else if(!event.shiftKey && document.activeElement===last){event.preventDefault();first.focus();}
+  }
   if(event.key==='Escape' && ui.viewer.classList.contains('expanded')){ui.viewer.classList.remove('expanded');syncExpanded();ui.fullscreen.focus();}
 });
 document.addEventListener('visibilitychange',()=>{if(document.hidden && phase!=='idle')stop('タブを離れたので、カメラを止めて映像を消しました。');});
 window.addEventListener('pagehide',()=>stop());document.addEventListener('freeze',()=>stop());
 document.querySelector('header a').addEventListener('click',()=>{$('guide').open=true;});
+window.addEventListener('resize',scheduleLayout);
+if(window.ResizeObserver){
+  const layoutObserver=new ResizeObserver(scheduleLayout);
+  for(const element of [document.querySelector('header'),document.querySelector('.mode-choice'),document.querySelector('.settings'),ui['mode-hint'],ui.viewer.querySelector('.controls'),ui['review-controls'],ui.status])layoutObserver.observe(element);
+}
 blank();renderControls();
