@@ -1,523 +1,83 @@
-:root {
-  color-scheme:light;
-  --bg:#f6f7f9;
-  --ink:#102139;
-  --accent:#006c67;
-  --line:#c5cdd5;
-  --danger:#b32828;
-  font-family:system-ui,-apple-system,"Noto Sans JP","Yu Gothic",sans-serif;
-  color:var(--ink);
-  background:var(--bg);
-  font-synthesis:none
+:root {color-scheme:light;font-family:system-ui,-apple-system,"Noto Sans JP",sans-serif;color:#102139;background:#f6f7f9;font-synthesis:none;}
+* {box-sizing:border-box;}
+body {margin:0;}
+[hidden] {display:none !important;}
+button,select,input {font:inherit;}
+button,select {min-height:44px;border:1px solid #a6b1be;border-radius:9px;background:#fff;color:#102139;font-weight:650;}
+button {padding:8px 14px;cursor:pointer;touch-action:manipulation;}
+button:disabled {opacity:.5;cursor:default;}
+button[aria-pressed="true"] {background:#e0f1ee;border-color:#006c67;color:#005650;}
+button.primary {background:#006c67;color:#fff;border-color:#006c67;}
+button.danger {color:#9e2333;border-color:#c89198;}
+button:focus-visible,select:focus-visible,input:focus-visible,a:focus-visible,summary:focus-visible {outline:3px solid #006c67;outline-offset:3px;}
+select {padding:5px 26px 5px 9px;}
+input[type="checkbox"] {width:22px;height:22px;accent-color:#006c67;}
+header {max-width:1240px;margin:auto;padding:12px 16px 8px;display:flex;align-items:center;justify-content:space-between;gap:12px;}
+h1 {font-size:clamp(20px,3vw,26px);margin:0;letter-spacing:.02em;}
+a {color:#00635d;text-underline-offset:3px;}
+header a {font-size:14px;min-height:32px;display:flex;align-items:center;}
+main {max-width:1240px;margin:auto;padding:0 16px 24px;}
+fieldset {margin:0;padding:0;border:0;min-width:0;}
+legend {position:absolute;clip-path:inset(50%);width:1px;height:1px;overflow:hidden;}
+.segmented {display:flex;gap:8px;}
+.segmented button {flex:1;padding:8px 12px;font-size:17px;}
+.segmented span {display:block;font-size:12px;font-weight:400;margin-top:2px;}
+.settings {display:flex;align-items:center;flex-wrap:wrap;gap:8px 18px;margin-top:10px;font-size:14px;}
+.settings label,.controls label {display:flex;align-items:center;gap:7px;min-height:44px;}
+.settings button {font-size:14px;padding:6px 12px;margin-left:auto;}
+.mode-hint {font-size:14px;margin:8px 0;min-height:20px;}
+.viewer {background:#fff;border:1px solid #cbd2dc;border-radius:12px;overflow:hidden;}
+.viewport {height:clamp(160px,calc(100svh - 295px),680px);max-height:calc((min(100vw, 1240px) - 34px) * .5625);background:#242a30;position:relative;min-height:0;}
+canvas {display:block;width:100%;height:100%;object-fit:contain;}
+.empty {position:absolute;inset:0;display:grid;place-items:center;padding:12px;color:#fff;text-align:center;font-size:clamp(17px,3vw,24px);}
+.empty p {background:#242a30e8;border-radius:8px;padding:12px 20px;}
+.view-state {position:absolute;top:8px;left:8px;max-width:calc(100% - 16px);margin:0;padding:5px 9px;border-radius:6px;background:#102139e8;color:#fff;font-size:13px;}
+.viewer[data-phase="review"] .viewport {height:clamp(130px,calc(100svh - 345px),630px);}
+.controls {display:flex;flex-wrap:wrap;align-items:center;gap:6px;padding:8px 10px 4px;}
+.controls button {font-size:15px;padding:7px 12px;}
+.controls label {font-size:13px;}
+#fullscreen {margin-left:auto;}
+#review-controls {padding:7px 12px 0;}
+.seek-label {display:flex;justify-content:space-between;font-size:12px;gap:10px;}
+#seek {width:100%;height:28px;margin:0;accent-color:#006c67;cursor:pointer;}
+.screen-note {margin:4px 12px 0;font-size:12px;color:#506073;}
+.status {font-size:13px;margin:4px 12px 9px;min-height:18px;line-height:1.45;}
+.status.error {color:#922333;font-weight:650;}
+.prompt {font-size:14px;margin:10px 0;text-align:center;}
+details {border-top:1px solid #d6dce3;padding:10px 0;font-size:14px;line-height:1.65;}
+summary {cursor:pointer;font-weight:650;min-height:32px;}
+details p {margin:8px 0;}
+ol {padding-left:24px;margin:8px 0;}
+li + li {margin-top:7px;}
+#source {position:fixed;left:-2px;bottom:0;width:1px;height:1px;opacity:0;pointer-events:none;}
+.viewer:fullscreen,.viewer.expanded {width:100%;height:100%;height:100svh;max-width:none;border:0;border-radius:0;display:flex;flex-direction:column;background:#fff;padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);}
+.viewer.expanded {position:fixed;inset:0;z-index:100;}
+.viewer:fullscreen .viewport,.viewer.expanded .viewport {flex:1;height:auto;min-height:0;max-height:none;}
+.viewer:fullscreen .controls,.viewer.expanded .controls {flex-shrink:0;}
+.view-expanded {overflow:hidden;}
+@media(max-width:600px) {
+  header {padding:9px 10px 6px;}
+  main {padding:0 10px 20px;}
+  .settings {gap:6px 10px;margin-top:7px;}
+  .settings button {margin-left:0;}
+  .segmented {gap:6px;}
+  .segmented button {font-size:16px;padding:7px 6px;}
+  .segmented span {font-size:11px;}
+  .controls {padding:6px;gap:5px;}
+  .controls button {padding:6px 9px;font-size:14px;}
+  .controls label {font-size:12px;gap:4px;}
+  .controls select {padding-left:6px;padding-right:20px;}
+  #fullscreen {margin-left:0;}
+  .viewport {height:clamp(150px,calc(100svh - 360px),580px);}
+  .mode-hint {font-size:13px;}
 }
-* {
-  box-sizing:border-box
-}
-body {
-  margin:0
-}
-header {
-  display:flex;
-  align-items:center;
-  gap:14px;
-  padding:12px 24px;
-  border-bottom:1px solid var(--line)
-}
-h1 {
-  margin:0;
-  font-size:30px;
-  letter-spacing:-.04em
-}
-header a {
-  margin-left:auto;
-  color:var(--ink);
-  font-weight:700;
-  text-underline-offset:5px;
-  padding:10px 4px
-}
-.trial {
-  font-size:13px;
-  color:#4f6072
-}
-main {
-  max-width:1500px;
-  margin:auto;
-  padding:14px 22px 26px
-}
-fieldset {
-  border:0;
-  padding:0;
-  margin:0;
-  min-width:0
-}
-legend {
-  font-size:18px;
-  font-weight:700;
-  margin-bottom:8px;
-  padding:0
-}
-.mode-choice {
-  max-width:800px
-}
-.mode-choice legend {
-  position:absolute;
-  width:1px;
-  height:1px;
-  overflow:hidden;
-  clip-path:inset(50%)
-}
-.mode-hint {
-  margin:9px 0 16px;
-  font-size:16px;
-  line-height:1.6
-}
-.segmented {
-  display:flex;
-  border:2px solid var(--accent);
-  border-radius:10px;
-  overflow:hidden
-}
-.segmented button {
-  flex:1;
-  border:0;
-  border-radius:0
-}
-button {
-  font:700 clamp(17px,1.8vw,24px)/1.3 system-ui,-apple-system,"Noto Sans JP",sans-serif;
-  color:var(--ink);
-  background:transparent;
-  border:2px solid var(--accent);
-  border-radius:10px;
-  padding:12px 10px;
-  min-height:56px;
-  cursor:pointer;
-  touch-action:manipulation
-}
-button span {
-  display:block;
-  font-size:13px;
-  font-weight:500;
-  margin-top:4px
-}
-button:hover:not(:disabled) {
-  background:#e1efed
-}
-button:disabled {
-  border-color:#b9c2ca;
-  color:#586572;
-  background:#eceff1;
-  cursor:default
-}
-button.primary,button[aria-pressed="true"] {
-  background:var(--accent);
-  color:white
-}
-button.primary:hover:not(:disabled),button[aria-pressed="true"]:hover {
-  background:#005650
-}
-button.danger {
-  color:var(--danger);
-  border-color:var(--danger)
-}
-button.danger:disabled {
-  color:#586572;
-  border-color:#b9c2ca
-}
-.mode-choice button {
-  font-size:21px;
-  padding:9px;
-  min-height:68px
-}
-.workspace {
-  display:grid;
-  grid-template-columns:minmax(0,1fr) minmax(260px,29%);
-  gap:24px;
-  align-items:start
-}
-.viewport {
-  position:relative;
-  aspect-ratio:16/9;
-  max-height:calc(100svh - 270px);
-  background:#303438;
-  border-radius:12px;
-  overflow:hidden
-}
-.viewport canvas {
-  width:100%;
-  height:100%;
-  object-fit:contain;
-  display:block
-}
-#app[data-phase="review"] .viewport {
-  height:clamp(150px,calc(100svh - 350px),480px);
-  aspect-ratio:auto
-}
-.empty {
-  position:absolute;
-  inset:0;
-  display:grid;
-  place-content:center;
-  color:white;
-  padding:24px;
-  text-align:center
-}
-.empty p {
-  font-size:clamp(20px,3vw,32px);
-  margin:0;
-  font-weight:700
-}
-.view-state {
-  position:absolute;
-  left:12px;
-  top:12px;
-  margin:0;
-  padding:7px 11px;
-  color:white;
-  background:#102139;
-  border:1px solid white;
-  font-size:14px;
-  font-weight:700;
-  border-radius:5px
-}
-.screen-note {
-  font-size:14px;
-  color:#40566b;
-  margin:8px 0 0
-}
-.prompt {
-  font-size:clamp(16px,1.65vw,21px);
-  font-weight:700;
-  margin:10px 0
-}
-.controls {
-  display:flex;
-  flex-direction:column;
-  gap:12px
-}
-.pair {
-  display:grid;
-  grid-template-columns:1fr 1fr;
-  gap:10px
-}
-.speed legend {
-  font-size:16px
-}
-.speed button {
-  font-size:18px
-}
-.privacy {
-  font-size:13px;
-  font-weight:650;
-  line-height:1.6;
-  margin:0
-}
-.status {
-  font-size:16px;
-  line-height:1.65;
-  margin:0
-}
-.status.error {
-  color:#942020;
-  border-left:4px solid currentColor;
-  padding-left:10px
-}
-#app:not([data-phase="review"]) .speed {
-  display:none
-}
-.seek-label {
-  display:block;
-  margin:8px 0 0;
-  font-size:15px
-}
-input[type="range"] {
-  display:block;
-  width:100%;
-  height:44px;
-  accent-color:var(--accent);
-  touch-action:pan-x
-}
-details {
-  margin-top:16px;
-  border-top:1px solid var(--line);
-  padding:12px 2px 0;
-  line-height:1.8
-}
-summary {
-  min-height:44px;
-  font-weight:700;
-  cursor:pointer
-}
-details p,details ol {
-  max-width:90ch;
-  margin:8px 0
-}
-details ol {
-  padding-left:1.6em
-}
-details li {
-  margin-bottom:7px
-}
-.teacher-grid {
-  display:grid;
-  grid-template-columns:1fr 1fr;
-  gap:14px;
-  max-width:900px
-}
-.teacher-grid button {
-  font-size:17px
-}
-select {
-  display:block;
-  width:100%;
-  padding:10px;
-  min-height:48px;
-  font:inherit;
-  margin-top:6px;
-  border:1px solid #677787;
-  border-radius:6px;
-  color:var(--ink);
-  background:white
-}
-.check-label {
-  display:flex;
-  align-items:center;
-  gap:8px;
-  min-height:48px
-}
-input[type="checkbox"] {
-  width:24px;
-  height:24px;
-  accent-color:var(--accent)
-}
-:focus-visible {
-  outline:3px solid #ad5300;
-  outline-offset:4px
-}
-[hidden] {
-  display:none!important
-}
-#source {
-  position:fixed;
-  width:1px;
-  height:1px;
-  left:-10px;
-  top:0;
-  pointer-events:none
-}
-#app:fullscreen {
-  overflow:auto;
-  max-width:none;
-  background:var(--bg);
-  padding:18px
-}
-@media(max-width:760px) {
-  header {
-    padding:10px 14px
-  }
-  h1 {
-    font-size:25px
-  }
-  main {
-    padding:12px 14px 24px
-  }
-  .mode-choice button {
-    font-size:18px
-  }
-  .workspace {
-    grid-template-columns:1fr;
-    gap:12px
-  }
-  .viewport {
-    max-height:none
-  }
-  .controls {
-    display:grid;
-    grid-template-columns:1fr 1fr;
-    gap:10px
-  }
-  .controls>.primary,.controls>.speed,.controls>.status,.controls>.privacy {
-    grid-column:1/-1
-  }
-  .controls>.pair {
-    grid-column:1/-1
-  }
-  .controls>.primary {
-    font-size:22px
-  }
-  .teacher-grid {
-    grid-template-columns:1fr
-  }
-  .mode-hint {
-    font-size:14px;
-    margin-bottom:12px
-  }
-}
-@media(orientation:landscape) and (max-height:650px) and (min-width:600px) {
-  header {
-    padding:6px 14px
-  }
-  h1 {
-    font-size:24px
-  }
-  main {
-    padding:8px 14px 20px
-  }
-  .mode-choice button {
-    min-height:54px;
-    font-size:18px;
-    padding:6px
-  }
-  .mode-choice button span {
-    font-size:12px;
-    margin-top:2px
-  }
-  .mode-hint {
-    font-size:14px;
-    margin:6px 0 10px
-  }
-  .workspace {
-    grid-template-columns:minmax(0,1fr) 250px;
-    gap:14px
-  }
-  .viewport {
-    max-height:calc(100svh - 240px)
-  }
-  button {
-    min-height:48px;
-    font-size:18px;
-    padding:9px 6px
-  }
-  .controls {
-    display:flex;
-    gap:8px
-  }
-  .prompt {
-    font-size:15px;
-    margin:8px 0
-  }
-  .status {
-    font-size:14px
-  }
-  .privacy {
-    font-size:12px
-  }
-  .speed button {
-    font-size:16px
-  }
-  #app[data-phase="review"] .viewport {
-    height:clamp(130px,calc(100svh - 300px),380px)
-  }
-}
-@media(orientation:landscape) and (max-height:420px) and (min-width:600px) {
-  header {
-    padding:4px 14px
-  }
-  h1 {
-    font-size:20px
-  }
-  header a {
-    padding:4px
-  }
-  .mode-choice button {
-    min-height:48px;
-    font-size:16px
-  }
-  .mode-choice button span {
-    font-size:11px
-  }
-  .mode-hint {
-    font-size:12px;
-    margin:4px 0 8px
-  }
-  .workspace {
-    grid-template-columns:minmax(0,1fr) 250px;
-    gap:12px
-  }
-  .controls {
-    gap:6px
-  }
-  .controls .status {
-    font-size:12px
-  }
-  .viewport {
-    max-height:none;
-    height:145px;
-    aspect-ratio:auto
-  }
-  .view-state {
-    font-size:11px;
-    left:6px;
-    top:6px;
-    padding:4px 6px
-  }
-  .screen-note {
-    font-size:12px
-  }
-  .prompt {
-    font-size:13px
-  }
-  .speed legend {
-    margin-bottom:4px;
-    font-size:13px
-  }
-  .speed button {
-    min-height:44px;
-    font-size:15px;
-    padding:5px
-  }
-  .speed button span {
-    font-size:11px
-  }
-  .privacy {
-    font-size:11px
-  }
-  #app[data-phase="review"] .viewport {
-    height:120px
-  }
-  .seek-label {
-    font-size:12px
-  }
-  .trial {
-    font-size:11px
-  }
-}
-/* Keep the exit and replay actions in reach on compact screens. */
-@media(max-width:760px) and (orientation:portrait) {
-  #app[data-phase="review"] .viewport {
-    height:clamp(110px,calc(100svh - 605px),240px)
-  }
-  #app[data-phase="review"] .controls {
-    gap:8px
-  }
-  #app[data-phase="review"] .controls>button {
-    min-height:48px;
-    padding:8px;
-    font-size:20px
-  }
-  #app[data-phase="review"] .speed legend {
-    font-size:14px;
-    margin-bottom:4px
-  }
-  #app[data-phase="review"] .speed button {
-    font-size:16px;
-    min-height:48px;
-    padding:5px
-  }
-  #app[data-phase="review"] .speed button span {
-    font-size:12px;
-    margin-top:2px
-  }
-}
-@media(orientation:landscape) and (max-height:420px) and (min-width:600px) {
-  #app[data-phase="review"] .mode-hint {
-    display:none
-  }
-  #app[data-phase="review"] .controls {
-    display:grid;
-    grid-template-columns:1fr 1fr;
-    gap:6px
-  }
-  #app[data-phase="review"] .controls>.primary,#app[data-phase="review"] .controls>.speed,#app[data-phase="review"] .controls>.pair,#app[data-phase="review"] .controls>.privacy,#app[data-phase="review"] .controls>.status {
-    grid-column:1/-1
-  }
+@media(orientation:landscape) and (max-height:500px) {
+  header {padding-top:4px;padding-bottom:4px;}
+  h1 {font-size:18px;}
+  .segmented button {padding:4px 8px;font-size:15px;}
+  .segmented span {display:none;}
+  .settings {margin-top:5px;gap:5px 12px;}
+  .mode-hint {margin:4px 0;}
+  .viewport {height:max(135px,calc(100svh - 255px));}
+  .prompt {margin:6px 0;}
 }

@@ -1,3 +1,12 @@
+// Fit the selected interval, plus capture margin, inside the pixel-buffer limit.
+export function capturePlan(profile, seconds, maxBytes) {
+  const maxAgeMs = (seconds + 0.8) * 1000;
+  const capacity = Math.floor(maxBytes / (profile.width * profile.height * 4));
+  const fps = Math.min(profile.fps, Math.floor((capacity - 2) / (maxAgeMs / 1000)));
+  if (fps < 1) throw new Error('Image budget too small');
+  return {...profile, fps, maxAgeMs, maxFrames:Math.ceil(maxAgeMs / 1000 * fps) + 2};
+}
+
 // Owns ImageBitmaps. Every removed image is explicitly closed.
 export class FrameBuffer {
   constructor({ maxFrames, maxBytes, maxAgeMs }) {
