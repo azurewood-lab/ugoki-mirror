@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="referrer" content="no-referrer">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self'; style-src 'self'; img-src 'self' data:; media-src 'self'; connect-src 'none'; font-src 'self'; object-src 'none'; base-uri 'none'; form-action 'none'">
+  <meta name="description" content="自動の遅延表示と、直前の動きをスローで見返す体育用アプリ。登録不要・広告なし・映像は端末内だけ。">
+  <link rel="icon" href="./icon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="./style.css">
+  <script type="module" src="./app.js"></script>
+  <title>うごきミラー｜体育の動きを見返す</title>
+</head>
+<body>
+  <header><h1>うごきミラー</h1><span class="trial">試用版</span><a href="#guide">使い方</a></header>
+  <main id="app">
+    <fieldset class="mode-choice"><legend>見る方法を選ぼう</legend><div class="segmented"><button type="button" data-mode="delay" aria-pressed="true">自動で見る<span>数秒あとに映る</span></button><button type="button" data-mode="slow" aria-pressed="false">押して見る<span>直前の動きをスローで</span></button></div></fieldset>
+    <p id="mode-hint" class="mode-hint">5秒あとに自動で映ります。動いたあと、安全な場所で見よう。</p>
+    <div class="workspace">
+      <section class="view-column" aria-label="動きを見る画面">
+        <div class="viewport" id="viewport">
+          <canvas id="display" width="480" height="270" aria-label="動きの映像。表示状態は下の説明で確認できます"></canvas>
+          <div class="empty" id="empty"><p id="empty-text">カメラをはじめよう</p></div>
+          <p class="view-state" id="view-state" hidden></p>
+        </div>
+        <p id="screen-note" class="screen-note">カメラ停止中</p>
+        <p class="prompt">見るところを1つ決めて、次の動きでためそう。</p>
+        <div id="review-controls" hidden>
+          <label class="seek-label" for="seek">見たいところへ <span id="clip-time"></span></label>
+          <input type="range" id="seek" min="0" max="1000" value="0" aria-label="映像の再生位置">
+        </div>
+      </section>
+      <section class="controls" aria-label="カメラと再生の操作">
+        <button id="start" class="primary" type="button">カメラをはじめる</button>
+        <button id="watch" class="primary" type="button" hidden>ゆっくり見る</button>
+        <button id="again" type="button" hidden>もう一度</button>
+        <button id="pause" type="button" hidden>とめる</button>
+        <fieldset class="speed"><legend>見返す速さ</legend><div class="segmented"><button type="button" data-rate="1" aria-pressed="false">ふつう<span>1倍</span></button><button type="button" data-rate="0.5" aria-pressed="true">ゆっくり<span>0.5倍</span></button></div></fieldset>
+        <div class="pair"><button id="fullscreen" type="button">全画面</button><button id="end" class="danger" type="button" disabled>おわる</button></div>
+        <p class="privacy">音声なし・映像はこの端末内だけ</p>
+        <p id="status" class="status" role="status" aria-live="polite">先生と撮影する場所を確かめてから、はじめよう。</p>
+      </section>
+    </div>
+    <details id="settings"><summary>先生の設定</summary><div class="teacher-grid">
+      <div id="delay-setting"><label for="delay-seconds">自動で映すまでの時間</label><select id="delay-seconds"><option value="3">3秒</option><option value="5" selected>5秒</option><option value="10">10秒</option></select></div>
+      <div id="clip-setting" hidden><label for="clip-seconds">直前の何秒を見返す？</label><select id="clip-seconds"><option value="3">3秒</option><option value="5" selected>5秒</option><option value="10">10秒</option></select></div>
+      <div><label for="quality">動きが重いときは軽量に</label><select id="quality"><option value="standard">標準：480×270・10コマ/秒目標</option><option value="light">軽量：320×180・8コマ/秒目標</option></select></div>
+      <label class="check-label"><input id="mirror" type="checkbox"> 鏡の向きで表示する（左右反転）</label>
+      <button id="switch" type="button" disabled>カメラ切替</button>
+      <button type="button" data-rate="0.25" aria-pressed="false">詳しく見る：0.25倍</button>
+    </div><p>時間・画質・向きは「おわる」のあとに設定できます。見る方法を切り替えると、カメラを止めて映像を消します。登録・設定の保存はありません。</p></details>
+    <details id="guide"><summary>使い方・撮影する場所</summary>
+      <ol><li>先生と端末を固定し、全身が映る画角を確認。助走・着地・通行の場所から離して置きます。</li><li>「自動で見る」は、動いたあとに安全な場所で画面を見ます。毎回ボタンを押す必要はありません。</li><li>「押して見る」は、準備ができたら運動し、終わってから「ゆっくり見る」。「もう一度」で同じ動き、「つぎへ」で映像を消してカメラを再開します。</li><li>「おわる」でカメラと映像を消します。タブを離れたときも終了します。</li></ol>
+      <p>保持バッファは最大10.8秒ぶん・画像計算値64MiB以内（処理中の画像・入力映像・Canvas等は別）。古い映像は順に消します。見返し中はカメラを止め、同じ映像を最長60秒保持します。カメラの連続利用は15分で自動終了。処理の時限はブラウザーが動いている間に働きます。</p>
+      <p>自動表示の「とめる」はカメラを止め、静止画1枚だけを最長60秒残します。「カメラを再開」で選んだ秒数の待ち時間が入ります。スローは取得したコマをゆっくり表示する方式で、撮れていない瞬間を補う機能はありません。</p>
+      <p>撮影を望まない人には、映らない場所で見る・友達の動きを言葉で伝える参加方法を用意します。操作が難しいときは、先生やペアが操作してください。</p>
+      <p>映像を外部へ送信する機能、音声収録、保存・共有、広告、アクセス解析ツールはありません。公開サイトの配信サービスは、アクセス時のIPアドレスなどを記録します。映像を送らないこととは別です。</p>
+      <p>試用版 v0.2.0。学校端末での動作と学校での利用可否は未確認です。URLへのアクセスとカメラの利用は、学校の確認経路で別々に確認してください。</p>
+    </details>
+    <details id="diagnostics"><summary>先生用：動作の確認</summary>
+      <p id="metrics">カメラ停止中・一時映像なし</p>
+      <p>画像の経過時間はブラウザーの処理内の値です。カメラの取込みと画面表示を含む実際の遅延は、時計を映して別途確認してください。容量は画像の計算値で、ブラウザー全体・GPU・入力映像の使用メモリとは異なります。</p>
+    </details>
+  </main>
+  <noscript><p>JavaScriptが必要です。学校端末では先生・管理担当者へ確認してください。</p></noscript>
+  <video id="source" muted playsinline aria-hidden="true"></video>
+</body>
+</html>
